@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2024
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDProtean", "UDProtean\UDProtean.csproj", "{6868D2F0-0E7F-4668-968B-F9BF445A834D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B48E8F66-2CAC-4EE1-B4CF-BE4A13308DFF}
+	EndGlobalSection
+EndGlobal
