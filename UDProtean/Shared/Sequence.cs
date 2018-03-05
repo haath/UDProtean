@@ -6,9 +6,9 @@ namespace UDProtean.Shared
 {
     internal struct Sequence
     {
-		int value;
+		uint value;
 
-		public int Value
+		public uint Value
 		{
 			get { return value; }
 		}

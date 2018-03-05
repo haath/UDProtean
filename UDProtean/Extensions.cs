@@ -33,14 +33,43 @@ namespace UDProtean
 			return buffer.Append(new byte[] { other });
 		}
 
-		public static byte[] PadLeft(this byte[] buffer, int length)
+		public static byte[] ToLength(this byte[] buffer, int length)
 		{
-			if (length <= buffer.Length)
+			if (buffer.Length < length)
+			{
+				byte[] padding = new byte[length - buffer.Length];
+
+
+				if (BitConverter.IsLittleEndian)
+				{
+					return buffer.Append(padding);
+				}
+				else
+				{
+					return padding.Append(buffer);
+				}
+			}
+			else if (buffer.Length > length)
+			{
+				if (BitConverter.IsLittleEndian)
+				{
+					return buffer.Slice(0, length);
+				}
+				else
+				{
+					return buffer.Slice(buffer.Length - length);
+				}
+			}
+			else
+			{
 				return buffer.Clone() as byte[];
+			}
+		}
 
-			byte[] padding = new byte[length - buffer.Length];
-
-			return padding.Append(buffer);
+		public static string ToHex(this byte[] buffer)
+		{
+			string hex = BitConverter.ToString(buffer);
+			return hex.Replace("-", "");
 		}
 	}
 }

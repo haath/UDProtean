@@ -4,6 +4,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("UDProteanTests")]
+
 namespace UDProtean.Shared
 {
 	internal delegate Task SendData(byte[] data);
@@ -11,9 +14,9 @@ namespace UDProtean.Shared
 
     internal class SequentialCommunication
     {
-		internal const int SEQUENCE_SIZE = 256;
+		internal const uint SEQUENCE_SIZE = 256;
 
-		int SequenceBytes
+		public static int SequenceBytes
 		{
 			get
 			{
@@ -43,12 +46,8 @@ namespace UDProtean.Shared
 
 		public async Task Send(byte[] data)
 		{
-			byte[] sequence = BitConverter.GetBytes(sending.Value);
-
-			if (sequence.Length < SequenceBytes)
-			{
-				sequence = sequence.PadLeft(SequenceBytes);
-			}
+			byte[] sequence = BitConverter.GetBytes(sending.Value)
+										  .ToLength(SequenceBytes);
 
 			byte[] dgram = sequence.Append(data);
 
@@ -58,13 +57,13 @@ namespace UDProtean.Shared
 			sendingBuffer[sending.Value] = dgram;
 			sending.Next();
 
-			await sendData(dgram);
+			await sendData?.Invoke(dgram);
 		}
 
 		public async Task Received(byte[] dgram)
 		{
-			byte[] sequence = dgram.Slice(0, SequenceBytes);
-			int sequenceNum = BitConverter.ToInt32(sequence, 0);
+			byte[] sequence = dgram.Slice(0, SequenceBytes).ToLength(4);
+			uint sequenceNum = BitConverter.ToUInt32(sequence, 0);
 
 			/*
 			 * If the datagram is only SequenceBytes long, then it's an ACK
@@ -91,7 +90,7 @@ namespace UDProtean.Shared
 				receiving.Next();
 
 				// Invoke the handler
-				await callback(data);
+				await callback?.Invoke(data);
 			}
 			else
 			{
@@ -103,7 +102,7 @@ namespace UDProtean.Shared
 			}
 		}
 
-		async Task ProcessAck(int sequenceNum)
+		async Task ProcessAck(uint sequenceNum)
 		{
 			if (ack.Value == sequenceNum)
 			{
@@ -119,15 +118,15 @@ namespace UDProtean.Shared
 
 				if (dgramToRepeat != null)
 				{
-					await sendData(dgramToRepeat);
+					await sendData?.Invoke(dgramToRepeat);
 				}
 			}
 		}
 
-		Task SendAck(int sequenceNum)
+		Task SendAck(uint sequenceNum)
 		{
 			byte[] ack = BitConverter.GetBytes(sequenceNum);
-			return sendData(ack);
+			return sendData?.Invoke(ack) ?? Task.FromResult(true);
 		}
     }
 }
