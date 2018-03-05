@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDProtean", "UDProtean\UDProtean.csproj", "{6868D2F0-0E7F-4668-968B-F9BF445A834D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UDProtean", "UDProtean\UDProtean.csproj", "{6868D2F0-0E7F-4668-968B-F9BF445A834D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDProteanTests", "UDProteanTests\UDProteanTests.csproj", "{BA6BEB32-94FA-4C6F-B1A4-1D6BC49F7402}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6868D2F0-0E7F-4668-968B-F9BF445A834D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA6BEB32-94FA-4C6F-B1A4-1D6BC49F7402}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA6BEB32-94FA-4C6F-B1A4-1D6BC49F7402}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA6BEB32-94FA-4C6F-B1A4-1D6BC49F7402}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA6BEB32-94FA-4C6F-B1A4-1D6BC49F7402}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
