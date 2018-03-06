@@ -33,11 +33,7 @@ namespace UDProtean.Tests
 				Assert.AreEqual(expected++, num);
 			};
 
-			Debug.WriteLine(5);
-
 			server.Start();
-
-			Debug.WriteLine(123);
 
 			UDPClient client = new UDPClient("127.0.0.1", 5000);
 
@@ -49,11 +45,9 @@ namespace UDProtean.Tests
 				client.Send(data);
 			}
 
-			Thread.Sleep(2000);
+			Thread.Sleep(1000);
 
 			server.Stop();
-
-			Assert.AreEqual(10000, expected);
 		}
 	}
 }
