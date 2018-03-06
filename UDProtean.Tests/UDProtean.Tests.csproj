@@ -58,6 +58,7 @@
     <Compile Include="SequentialTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestBase.cs" />
+    <Compile Include="TestBehavior.cs" />
     <Compile Include="UdpTest.cs" />
   </ItemGroup>
   <ItemGroup>

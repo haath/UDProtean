@@ -15,10 +15,7 @@ namespace UDProtean.Shared
 
     internal class SequentialCommunication
     {
-		static int ids = -1;
 		internal const uint SEQUENCE_SIZE = 512;
-
-		int id = ids++;
 
 		public static int SequenceBytes
 		{

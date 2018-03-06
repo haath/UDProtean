@@ -8,12 +8,13 @@ namespace UDProtean.Server
 {
     public abstract class UDPClientBehavior
     {
+		protected IPEndPoint EndPoint { get; private set; }
 
-		protected IPEndPoint endPoint { get; private set; }
+		SendData sendMethod;
 
-		internal void _OnOpen(IPEndPoint endPoint)
+		internal void _OnOpen(IPEndPoint endPoint, SendData sendMethod)
 		{
-			this.endPoint = endPoint;
+			EndPoint = endPoint;
 		}
 
 		internal void _OnData(byte[] data)
@@ -28,5 +29,10 @@ namespace UDProtean.Server
 		protected abstract void OnData(byte[] data);
 
 		protected abstract void OnError(Exception ex);
+
+		public void Send(byte[] data)
+		{
+			sendMethod?.Invoke(data);
+		}
     }
 }

@@ -21,7 +21,12 @@ namespace UDProtean.Server
 		{
 			ClientBehavior behavior = new ClientBehavior();
 
-			behavior._OnOpen(endPoint);
+			connections.Add(endPoint, behavior);
+
+			behavior._OnOpen(
+				endPoint,
+				new SendData((data) => SendData(data, endPoint))
+				);
 
 			return base.InstantiateConnection(endPoint, dgram);
 		}

@@ -12,10 +12,9 @@ using System.Threading;
 
 namespace UDProtean.Client
 {
-    public class UDPClient
+    public class UDPClient : UDPSocket
     {
 		IPEndPoint serverEndPoint;
-		UdpClient socket;
 
 		CancellationTokenSource runningCancellationToken;
 
@@ -61,6 +60,8 @@ namespace UDProtean.Client
 		public void Close()
 		{
 			runningCancellationToken.Cancel();
+
+			Dispose();
 		}
 
 		public void Send(byte[] data)
@@ -72,19 +73,19 @@ namespace UDProtean.Client
 		{
 			while (!cancellationToken.IsCancellationRequested)
 			{
-				byte[] dgram = await Receive();
+				byte[] dgram = await ReceiveFromServer();
 
 				comm.Received(dgram);
 			}
 		}
 
-		async Task<byte[]> Receive(CancellationToken cancellationToken = default(CancellationToken))
+		async Task<byte[]> ReceiveFromServer(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			while (!cancellationToken.IsCancellationRequested)
 			{
 				try
 				{
-					UdpReceiveResult dgram = await socket.ReceiveAsync();
+					UdpReceiveResult dgram = await Receive();
 
 					if (dgram.RemoteEndPoint.Equals(serverEndPoint))
 					{
@@ -99,14 +100,9 @@ namespace UDProtean.Client
 			return null;
 		}
 
-		async Task SendDataAsync(byte[] data)
-		{
-			await socket.SendAsync(data, data.Length, serverEndPoint);
-		}
-
 		void SendData(byte[] data)
 		{
-			SendDataAsync(data).Wait();
+			SendData(data, serverEndPoint);
 		}
 
 		void OnReceivedData(byte[] data)

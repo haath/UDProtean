@@ -11,14 +11,11 @@ using UDProtean.Shared;
 
 namespace UDProtean.Server
 {
-    public abstract class UDPListener
+    public abstract class UDPListener : UDPSocket
     {
-		UdpClient serverSocket;
-
 		CancellationTokenSource runningCancellationToken;
 
 		public event EventHandler<ErrorEventArgs> OnError;
-
 		public event EventHandler<LogEventArgs> OnLog;
 
 		Dictionary<IPEndPoint, SequentialCommunication> connections;
@@ -30,7 +27,7 @@ namespace UDProtean.Server
 			{
 				IPEndPoint endPoint = new IPEndPoint(bindAddress, port);
 
-				serverSocket = new UdpClient(endPoint);
+				socket = new UdpClient(endPoint);
 			}
 			else
 			{
@@ -50,6 +47,8 @@ namespace UDProtean.Server
 		public void Stop()
 		{
 			runningCancellationToken.Cancel();
+
+			Dispose();
 		}
 
 		async Task Run()
@@ -58,7 +57,7 @@ namespace UDProtean.Server
 			{
 				try
 				{
-					UdpReceiveResult receive = await serverSocket.ReceiveAsync();
+					UdpReceiveResult receive = await Receive();
 
 					IPEndPoint endPoint = receive.RemoteEndPoint;
 					byte[] dgram = receive.Buffer;
@@ -95,7 +94,7 @@ namespace UDProtean.Server
 
 		internal virtual SequentialCommunication InstantiateConnection(IPEndPoint endPoint, byte[] dgram)
 		{
-			SendData sendMethod = (data) => Send(endPoint, data).Wait();
+			SendData sendMethod = (data) => Send(endPoint, data);
 			DataCallback dataMethod = (data) => OnReceivedData(endPoint, data);
 
 			return new SequentialCommunication(sendMethod, dataMethod);
@@ -109,9 +108,9 @@ namespace UDProtean.Server
 
 		protected abstract void OnReceivedData(IPEndPoint endPoint, byte[] data);
 
-		async Task Send(IPEndPoint endPoint, byte[] dgram)
+		void Send(IPEndPoint endPoint, byte[] dgram)
 		{
-			await serverSocket.SendAsync(dgram, dgram.Length, endPoint);
+			SendData(dgram, endPoint);
 		}
 	}
 }
