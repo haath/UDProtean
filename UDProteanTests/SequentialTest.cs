@@ -130,10 +130,10 @@ namespace UDProteanTests
 
 		[TestCase(0.0)]
 		[TestCase(0.2)]
-		[TestCase(0.3)]
+		[TestCase(0.4)]
 		public void Communicating(double packetLoss)
 		{
-			Queue<uint> vals = new Queue<uint>(chance.N(ushort.MaxValue, () => (uint)chance.Natural()));
+			Queue<uint> vals = new Queue<uint>(chance.N(ushort.MaxValue * 2, () => (uint)chance.Natural()));
 			Queue<uint> toSend = new Queue<uint>(vals);
 
 			SequentialCommunication comm1 = null;			
