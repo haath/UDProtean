@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 using System.Runtime.CompilerServices;
@@ -9,12 +10,15 @@ using System.Runtime.CompilerServices;
 
 namespace UDProtean.Shared
 {
-	internal delegate Task SendData(byte[] data);
-	internal delegate Task DataCallback(byte[] data);
+	internal delegate void SendData(byte[] data);
+	internal delegate void DataCallback(byte[] data);
 
     internal class SequentialCommunication
     {
-		internal const uint SEQUENCE_SIZE = 256;
+		static int ids = -1;
+		internal const uint SEQUENCE_SIZE = 512;
+
+		int id = ids++;
 
 		public static int SequenceBytes
 		{
@@ -32,6 +36,7 @@ namespace UDProtean.Shared
 		Sequence ack;
 
 		byte[][] sendingBuffer;
+		byte[][] receivingBuffer;
 
 		SendData sendData;
 		DataCallback callback;
@@ -42,10 +47,13 @@ namespace UDProtean.Shared
 			this.callback = callback;
 
 			sendingBuffer = new byte[SEQUENCE_SIZE][];
+			receivingBuffer = new byte[SEQUENCE_SIZE][];
 		}
 
-		public async Task Send(byte[] data)
+		public void Send(byte[] data)
 		{
+			//Debug.WriteLine(id + "\t Sending seq:\t" + sending.Value);
+
 			byte[] sequence = BitConverter.GetBytes(sending.Value)
 										  .ToLength(SequenceBytes);
 
@@ -55,12 +63,12 @@ namespace UDProtean.Shared
 			 * First, store the datagram in the buffer
 			 */
 			sendingBuffer[sending.Value] = dgram;
-			sending.Next();
+			sending.MoveNext();
 
-			await sendData?.Invoke(dgram);
+			sendData?.Invoke(dgram);
 		}
 
-		public async Task Received(byte[] dgram)
+		public void Received(byte[] dgram)
 		{
 			byte[] sequence = dgram.Slice(0, SequenceBytes).ToLength(4);
 			uint sequenceNum = BitConverter.ToUInt32(sequence, 0);
@@ -70,11 +78,15 @@ namespace UDProtean.Shared
 			 */
 			if (dgram.Length == SequenceBytes)
 			{
-				await ProcessAck(sequenceNum);
+				//Debug.WriteLine(id + "\t Received ack:\t" + sequenceNum);
+				ProcessAck(sequenceNum);
 				return;
 			}
 
 			byte[] data = dgram.Slice(SequenceBytes);
+			receivingBuffer[sequenceNum] = data;
+
+			//Debug.WriteLine(id + "\t Received seq:\t" + sequenceNum + " / " + receiving.Value + " " + data.ToHex());
 
 			if (receiving.Value == sequenceNum)
 			{
@@ -82,15 +94,12 @@ namespace UDProtean.Shared
 				 * This datagram is on-par with the sequence
 				 * Handle it
 				 */
-				
+
+				// Advance the receiving sequence according to the receiving buffer
+				ProcessReceivingBuffer();
+
 				// Send ack
-				await SendAck(receiving.Value);
-
-				// Increment the receiving sequence
-				receiving.Next();
-
-				// Invoke the handler
-				await callback?.Invoke(data);
+				SendAck(receiving.Previous);
 			}
 			else
 			{
@@ -98,35 +107,63 @@ namespace UDProtean.Shared
 				 * We received a datagram with an unexpected sequence number
 				 * Let the other end know which was the last datagram we received
 				 */
-				await SendAck(receiving.Value);
+				
+				SendAck(receiving.Previous);
+			}
+		}
+		
+		void ProcessReceivingBuffer()
+		{
+			while (receivingBuffer[receiving.Value] != null)
+			{
+				byte[] data = receivingBuffer[receiving.Value];
+				receivingBuffer[receiving.Value] = null;
+
+				//Debug.WriteLine(id + "\t Invoking seq:\t" + receiving.Value);
+				callback?.Invoke(data);
+
+				receiving.MoveNext();
 			}
 		}
 
-		async Task ProcessAck(uint sequenceNum)
+		void ProcessAck(uint sequenceNum)
 		{
 			if (ack.Value == sequenceNum)
 			{
-				ack.Next();
+				Sequence bufferClear = ack.Clone();
+				ack.MoveNext();
+
+				while (sendingBuffer[bufferClear.Value] != null && bufferClear.Value != ack.Value)
+				{
+					sendingBuffer[bufferClear.Value] = null;
+					bufferClear.MovePrevious();
+				}
+
 			}
 			else
 			{
 				/*
 				 * We received an ACK for a datagram that was not the last on the sequence
-				 * Resend the datagram that is after the one being acknowledged
+				 * Resend the datagram that are after the one being acknowledged
 				 */
-				byte[] dgramToRepeat = sendingBuffer[(sequenceNum + 1) % SEQUENCE_SIZE];
+				uint toRepeat = (sequenceNum + 1) % SEQUENCE_SIZE;
+				byte[] dgramToRepeat = sendingBuffer[toRepeat];
+
+				ack.Set(toRepeat);
 
 				if (dgramToRepeat != null)
 				{
-					await sendData?.Invoke(dgramToRepeat);
+					//Debug.WriteLine(id + "\t Repeating:\t" + toRepeat);
+					sendData?.Invoke(dgramToRepeat);
 				}
 			}
 		}
 
-		Task SendAck(uint sequenceNum)
+		void SendAck(uint sequenceNum)
 		{
-			byte[] ack = BitConverter.GetBytes(sequenceNum);
-			return sendData?.Invoke(ack) ?? Task.FromResult(true);
+			//Debug.WriteLine(id + "\t Sending ack:\t" + sequenceNum);
+			byte[] ack = BitConverter.GetBytes(sequenceNum).ToLength(SequenceBytes);
+			sendData?.Invoke(ack);
 		}
     }
 }

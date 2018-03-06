@@ -1,31 +1,35 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using UDProtean;
 using UDProtean.Shared;
 using ChanceNET;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Diagnostics;
+
+using NUnit;
+using NUnit.Framework;
 
 namespace UDProteanTests
 {
-	[TestClass]
+	[TestFixture]
 	public class SequentialTest
 	{
-		private TestContext testContextInstance;
+		Chance _chance;
 
-		/// <summary>
-		///  Gets or sets the test context which provides
-		///  information about and functionality for the current test run.
-		///</summary>
-		public TestContext TestContext
+		Chance chance
 		{
-			get { return testContextInstance; }
-			set { testContextInstance = value; }
+			get
+			{
+				if (_chance == null)
+				{
+					_chance = new Chance();
+					Console.WriteLine("Seed: " + _chance.GetSeed());
+				}
+				return _chance;
+			}
 		}
-
-		Chance chance = new Chance();
 
 		int DatagramLength() => chance.Integer(500, 5000);
 
@@ -35,7 +39,7 @@ namespace UDProteanTests
 		}
 
 
-		[TestMethod]
+		[Test]
 		public void Utils()
 		{
 			byte[] b1 = chance.Hash(DatagramLength());
@@ -51,7 +55,7 @@ namespace UDProteanTests
 			CollectionAssert.AreEqual(b1, b1.ToLength(b1.Length));
 		}
 
-		[TestMethod]
+		[Test]
 		public void Sending()
 		{
 			byte[][] buffer = TestBuffer();
@@ -73,20 +77,18 @@ namespace UDProteanTests
 
 				data = data.Slice(SequentialCommunication.SequenceBytes);
 				CollectionAssert.AreEqual(expectedBuffer, data);
-
-				return Task.CompletedTask;
 			};
 
 			comm = new SequentialCommunication(send, null);
 			
 			foreach (byte[] dgram in buffer)
 			{
-				comm.Send(dgram).Wait();
+				comm.Send(dgram);
 				expected++;
 			}
 		}
 
-		[TestMethod]
+		[Test]
 		public void Receiving()
 		{
 			SequentialCommunication comm;
@@ -99,8 +101,6 @@ namespace UDProteanTests
 
 				Assert.AreEqual(next, received);
 				next++;
-
-				return Task.CompletedTask;
 			};
 
 			comm = new SequentialCommunication(null, callback);
@@ -116,7 +116,7 @@ namespace UDProteanTests
 			Action<uint, uint> send = (seq, data) =>
 			{
 				byte[] dgram = genDgram(seq, BitConverter.GetBytes(data).ToLength(4));
-				comm.Received(dgram).Wait();
+				comm.Received(dgram);
 			};
 
 			send(0, 0);
@@ -126,6 +126,56 @@ namespace UDProteanTests
 			send(3, 3);
 			send(1, 1);
 			send(4, 4);
+		}
+
+		[TestCase(0.0)]
+		[TestCase(0.2)]
+		[TestCase(0.3)]
+		public void Communicating(double packetLoss)
+		{
+			Queue<uint> vals = new Queue<uint>(chance.N(ushort.MaxValue, () => (uint)chance.Natural()));
+			Queue<uint> toSend = new Queue<uint>(vals);
+
+			SequentialCommunication comm1 = null;			
+			SequentialCommunication comm2 = null;
+
+			Action<SequentialCommunication, byte[]> trySend = (comm, data) =>
+			{
+				if (chance.Bool(1 - packetLoss))
+				{
+					comm.Received(data);
+				}
+			};
+
+			Action<uint, byte[]> verify = (expected, data) =>
+			{
+				uint recv = BitConverter.ToUInt32(data.ToLength(4), 0);
+				Assert.AreEqual(expected, recv);
+			};
+
+			SendData send1 = (data) =>
+			{
+				trySend(comm2, data);
+			};
+
+			SendData send2 = (data) =>
+			{
+				trySend(comm1, data);
+			};
+
+			DataCallback callback2 = (data) =>
+			{
+				verify(vals.Dequeue(), data);
+			};
+
+			comm1 = new SequentialCommunication(send1, null);
+			comm2 = new SequentialCommunication(send2, callback2);
+
+			for (int i = 0; i < vals.Count; i++)
+			{
+				byte[] data = BitConverter.GetBytes(toSend.Dequeue());
+				comm1.Send(data);
+			}
 		}
 	}
 }
