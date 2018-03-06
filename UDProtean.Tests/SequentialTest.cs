@@ -11,33 +11,11 @@ using System.Diagnostics;
 using NUnit;
 using NUnit.Framework;
 
-namespace UDProteanTests
+namespace UDProtean.Tests
 {
 	[TestFixture]
-	public class SequentialTest
+	public class SequentialTest : TestBase
 	{
-		Chance _chance;
-
-		Chance chance
-		{
-			get
-			{
-				if (_chance == null)
-				{
-					_chance = new Chance();
-					Console.WriteLine("Seed: " + _chance.GetSeed());
-				}
-				return _chance;
-			}
-		}
-
-		int DatagramLength() => chance.Integer(500, 5000);
-
-		byte[][] TestBuffer()
-		{
-			return chance.N<byte[]>((int)SequentialCommunication.SEQUENCE_SIZE * 3, () => chance.Hash(DatagramLength())).ToArray();
-		}
-
 
 		[Test]
 		public void Utils()
@@ -130,7 +108,7 @@ namespace UDProteanTests
 
 		[TestCase(0.0)]
 		[TestCase(0.2)]
-		[TestCase(0.4)]
+		[TestCase(0.3)]
 		public void Communicating(double packetLoss)
 		{
 			Queue<uint> vals = new Queue<uint>(chance.N(ushort.MaxValue * 2, () => (uint)chance.Natural()));

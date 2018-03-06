@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HaathUDP
+namespace UDProtean.Events
 {
     public class OpenEventArgs : EventArgs
     {

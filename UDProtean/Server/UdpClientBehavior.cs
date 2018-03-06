@@ -4,7 +4,7 @@ using System.Text;
 
 namespace UDProtean.Server
 {
-    public abstract class UdpClientBehavior
+    public abstract class UDPClientBehavior
     {
     }
 }

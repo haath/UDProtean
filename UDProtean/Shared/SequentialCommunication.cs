@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("UDProteanTests")]
+[assembly: InternalsVisibleTo("UDProtean.Tests")]
 
 namespace UDProtean.Shared
 {
@@ -52,8 +52,6 @@ namespace UDProtean.Shared
 
 		public void Send(byte[] data)
 		{
-			//Debug.WriteLine(id + "\t Sending seq:\t" + sending.Value);
-
 			byte[] sequence = BitConverter.GetBytes(sending.Value)
 										  .ToLength(SequenceBytes);
 
@@ -65,7 +63,7 @@ namespace UDProtean.Shared
 			sendingBuffer[sending.Value] = dgram;
 			sending.MoveNext();
 
-			sendData?.Invoke(dgram);
+			SendData(dgram);
 		}
 
 		public void Received(byte[] dgram)
@@ -78,15 +76,12 @@ namespace UDProtean.Shared
 			 */
 			if (dgram.Length == SequenceBytes)
 			{
-				//Debug.WriteLine(id + "\t Received ack:\t" + sequenceNum);
 				ProcessAck(sequenceNum);
 				return;
 			}
 
 			byte[] data = dgram.Slice(SequenceBytes);
 			receivingBuffer[sequenceNum] = data;
-
-			//Debug.WriteLine(id + "\t Received seq:\t" + sequenceNum + " / " + receiving.Value + " " + data.ToHex());
 
 			if (receiving.Value == sequenceNum)
 			{
@@ -118,9 +113,8 @@ namespace UDProtean.Shared
 			{
 				byte[] data = receivingBuffer[receiving.Value];
 				receivingBuffer[receiving.Value] = null;
-
-				//Debug.WriteLine(id + "\t Invoking seq:\t" + receiving.Value);
-				callback?.Invoke(data);
+				
+				OnData(data);
 
 				receiving.MoveNext();
 			}
@@ -153,17 +147,25 @@ namespace UDProtean.Shared
 
 				if (dgramToRepeat != null)
 				{
-					//Debug.WriteLine(id + "\t Repeating:\t" + toRepeat);
-					sendData?.Invoke(dgramToRepeat);
+					SendData(dgramToRepeat);
 				}
 			}
 		}
 
 		void SendAck(uint sequenceNum)
 		{
-			//Debug.WriteLine(id + "\t Sending ack:\t" + sequenceNum);
 			byte[] ack = BitConverter.GetBytes(sequenceNum).ToLength(SequenceBytes);
-			sendData?.Invoke(ack);
+			SendData(ack);
+		}
+
+		protected virtual void SendData(byte[] data)
+		{
+			sendData?.Invoke(data);
+		}
+
+		protected virtual void OnData(byte[] data)
+		{
+			callback?.Invoke(data);
 		}
     }
 }

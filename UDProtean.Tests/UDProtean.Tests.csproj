@@ -8,8 +8,8 @@
     <ProjectGuid>{BA6BEB32-94FA-4C6F-B1A4-1D6BC49F7402}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UDProteanTests</RootNamespace>
-    <AssemblyName>UDProteanTests</AssemblyName>
+    <RootNamespace>UDProtean.Tests</RootNamespace>
+    <AssemblyName>UDProtean.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -57,11 +57,10 @@
   <ItemGroup>
     <Compile Include="SequentialTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestBase.cs" />
+    <Compile Include="UdpTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="OrderedTest1.orderedtest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

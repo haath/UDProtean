@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,11 @@ namespace UDProtean.Events
 {
     public class DataEventArgs : EventArgs
     {
-        public byte[] RawData { get; private set; }
+        public byte[] Data { get; private set; }
 
         internal DataEventArgs(byte[] data)
         {
-            RawData = data;
+            Data = data;
         }
     }
 }
