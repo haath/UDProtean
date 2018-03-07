@@ -19,13 +19,17 @@ namespace UDProtean.Tests
 	[TestFixture]
 	public class UdpTest : TestBase
 	{
+		const int PORT = 50002;
+
+		Queue<IDisposable> disposables = new Queue<IDisposable>();
+
 		[TestCase(0.0)]
 		[TestCase(0.3)]
 		public void ServerReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
 
-			UDPServer server = new UDPServer(5000);
+			UDPServer server = GetServer();
 
 			uint expected = 0;
 
@@ -38,7 +42,7 @@ namespace UDProtean.Tests
 
 			server.Start();
 
-			UDPClient client = new UDPClient("127.0.0.1", 5000);
+			UDPClient client = GetClient();
 
 			client.Connect();
 
@@ -50,7 +54,7 @@ namespace UDProtean.Tests
 
 			Thread.Sleep(1000);
 
-			server.Stop();
+			Dispose();
 		}
 
 		[TestCase(0.0)]
@@ -59,10 +63,10 @@ namespace UDProtean.Tests
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
 
-			UDPServer<TestBehavior> server = new UDPServer<TestBehavior>(5000);
+			UDPServer<TestBehavior> server = GetServer<TestBehavior>();
 			server.Start();
 
-			UDPClient client = new UDPClient("127.0.0.1", 5000);
+			UDPClient client = GetClient();
 
 			client.Connect();
 
@@ -74,7 +78,7 @@ namespace UDProtean.Tests
 
 			Thread.Sleep(1000);
 
-			server.Stop();
+			Dispose();
 		}
 
 		[TestCase(0.0)]
@@ -83,10 +87,10 @@ namespace UDProtean.Tests
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
 
-			UDPServer<TestBehavior> server = new UDPServer<TestBehavior>(5000);
+			UDPServer<TestBehavior> server = GetServer<TestBehavior>();
 			server.Start();
 
-			UDPClient client = new UDPClient("127.0.0.1", 5000);
+			UDPClient client = GetClient();
 
 			uint expected = 0;
 			client.OnData += (s, d) =>
@@ -104,8 +108,36 @@ namespace UDProtean.Tests
 			}
 
 			Thread.Sleep(1000);
+			
+			Dispose();
+		}
 
-			server.Stop();
+		UDPClient GetClient()
+		{
+			UDPClient client = new UDPClient("127.0.0.1", PORT);
+			disposables.Enqueue(client);
+			return client;
+		}
+
+		UDPServer GetServer()
+		{
+			UDPServer server = new UDPServer(PORT);
+			disposables.Enqueue(server);
+			return server;
+		}
+
+		UDPServer<T> GetServer<T>() where T : UDPClientBehavior, new()
+		{
+			UDPServer<T> server = new UDPServer<T>(PORT);
+			disposables.Enqueue(server);
+			return server;
+		}
+
+		[TearDown]
+		public void Dispose()
+		{
+			foreach (IDisposable disposable in disposables)
+				disposable.Dispose();
 		}
 	}
 }

@@ -57,13 +57,6 @@ namespace UDProtean.Client
 			SendData(new byte[4]);
 		}
 
-		public void Close()
-		{
-			runningCancellationToken.Cancel();
-
-			Dispose();
-		}
-
 		public void Send(byte[] data)
 		{
 			comm.Send(data);

@@ -8,12 +8,15 @@ using System.Threading;
 
 namespace UDProtean.Shared
 {
-    public abstract class UDPSocket
+    public abstract class UDPSocket : IDisposable
     {
 		internal static double PACKET_LOSS = 0.0;
 		Random rand = new Random();
 
 		protected UdpClient socket { get; set; }
+		protected CancellationTokenSource runningCancellationToken;
+
+		bool socketDisposed = false;
 
 		protected async Task SendDataAsync(byte[] data, IPEndPoint endPoint)
 		{
@@ -33,9 +36,27 @@ namespace UDProtean.Shared
 			return await socket.ReceiveAsync();
 		}
 
-		protected void Dispose()
+		public void Close()
 		{
-			(socket as IDisposable).Dispose();
+			if (runningCancellationToken != null && !runningCancellationToken.IsCancellationRequested)
+			{
+				runningCancellationToken.Cancel();
+			}
+		}
+
+		public void Dispose()
+		{
+			Close();
+			if (!socketDisposed)
+			{
+				socketDisposed = true;
+				socket.Client.Dispose();
+			}
+		}
+
+		~UDPSocket()
+		{
+			Dispose();
 		}
 	}
 }

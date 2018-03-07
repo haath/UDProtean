@@ -46,9 +46,7 @@ namespace UDProtean.Server
 
 		public void Stop()
 		{
-			runningCancellationToken.Cancel();
-
-			Dispose();
+			Close();
 		}
 
 		async Task Run()
