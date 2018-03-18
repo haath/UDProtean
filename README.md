@@ -2,7 +2,9 @@
 
 [![Build Status](https://devops.gmantaos.com/buildStatus/icon?job=UDProtean)](https://devops.gmantaos.com/job/UDProtean/)
 
+Primarily with multiplayer games in mind, where the communication between the server and the client is made up of very frequent and small time-sensitive messages. Obviously the TCP protocol never satisfied cases like that. UDP on the other hand usually required a lot of wrapping and delivery acknowledgements, to make sure that nothing important is lost, or delivered out of order.
 
+What this library does, is provive under-the-hood sequential communication, so that the API on which messages are received and handled can assume that everything is sent, delivered and handled in the order in which it was sent.
 
 ## Usage
 
