@@ -25,13 +25,16 @@
     <PackageTags>udp net handshake virtual connection reliable inorder</PackageTags>
 
 
-    <Description>Establishing virtual connections for UDP realiable in-order message delivery.</Description>
+    <Description>Establishing virtual connections over UDP for realiable in-order message delivery.</Description>
 
 
     <PackageId>UDProtean</PackageId>
 
 
-    <Version>1.0.0-beta</Version>
+    <Version>1.0.1-beta</Version>
+
+
+    <PackageIconUrl>https://raw.githubusercontent.com/gmantaos/UDProtean/master/Assets/icon.png</PackageIconUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.6|AnyCPU'">
