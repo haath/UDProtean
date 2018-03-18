@@ -16,7 +16,6 @@ using NUnit.Framework;
 
 namespace UDProtean.Tests
 {
-	[TestFixture]
 	public class UdpTest : TestBase
 	{
 		static int port = new Random().Next(1024, 60000);
@@ -62,9 +61,7 @@ namespace UDProtean.Tests
 
 			Dispose();
 		}
-
-		[TestCase(0.0)]
-		[TestCase(0.3)]
+		
 		public void ServerBehaviorReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -86,9 +83,7 @@ namespace UDProtean.Tests
 
 			Dispose();
 		}
-
-		[TestCase(0.0)]
-		[TestCase(0.3)]
+		
 		public void BidirectionalReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;

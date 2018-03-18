@@ -5,6 +5,33 @@
 
 
     <DefineConstants Condition=" '$(TargetFrameworkVersion)' != 'netstandard1.6' ">DNS_SUPPORTED</DefineConstants>
+
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+
+    <PackageProjectUrl>https://github.com/gmantaos/UDProtean</PackageProjectUrl>
+
+
+    <Authors>G. Mantaos</Authors>
+
+
+    <Product />
+
+
+    <RepositoryUrl>https://github.com/gmantaos/UDProtean</RepositoryUrl>
+
+
+    <PackageTags>udp net handshake virtual connection reliable inorder</PackageTags>
+
+
+    <Description>Establishing virtual connections for UDP realiable in-order message delivery.</Description>
+
+
+    <PackageId>UDProtean</PackageId>
+
+
+    <Version>1.0.0-beta</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.6|AnyCPU'">

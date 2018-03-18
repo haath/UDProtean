@@ -124,7 +124,8 @@ namespace UDProtean.Shared
 				Sequence bufferClear = ack.Clone();
 				ack.MoveNext();
 
-				while (sendingBuffer[bufferClear.Value] != null && bufferClear.Value != ack.Value)
+				while (sendingBuffer[bufferClear.Value] != null 
+					&& bufferClear.Value != ack.Value)
 				{
 					sendingBuffer[bufferClear.Value] = null;
 					bufferClear.MovePrevious();
