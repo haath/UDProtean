@@ -19,12 +19,18 @@ namespace UDProtean.Tests
 	[TestFixture]
 	public class UdpTest : TestBase
 	{
-		const int PORT = 50002;
+		static int port = new Random().Next(1024, 60000);
 
 		Queue<IDisposable> disposables = new Queue<IDisposable>();
 
-		[TestCase(0.0)]
-		[TestCase(0.3)]
+		[Test]
+		public void Constructors()
+		{
+			UDPServer server = GetServer();
+			UDPClient client = GetClient();
+			UDPServer<TestBehavior> serverT = GetServer<TestBehavior>();
+		}
+
 		public void ServerReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -49,7 +55,7 @@ namespace UDProtean.Tests
 			for (uint i = 0; i < 10000; i++)
 			{
 				byte[] data = BitConverter.GetBytes(i);
-				client.Send(data);
+				//client.Send(data);
 			}
 
 			Thread.Sleep(1000);
@@ -64,7 +70,7 @@ namespace UDProtean.Tests
 			UDPSocket.PACKET_LOSS = packetLoss;
 
 			UDPServer<TestBehavior> server = GetServer<TestBehavior>();
-			server.Start();
+			//server.Start();
 
 			UDPClient client = GetClient();
 
@@ -88,7 +94,7 @@ namespace UDProtean.Tests
 			UDPSocket.PACKET_LOSS = packetLoss;
 
 			UDPServer<TestBehavior> server = GetServer<TestBehavior>();
-			server.Start();
+			//server.Start();
 
 			UDPClient client = GetClient();
 
@@ -114,21 +120,21 @@ namespace UDProtean.Tests
 
 		UDPClient GetClient()
 		{
-			UDPClient client = new UDPClient("127.0.0.1", PORT);
+			UDPClient client = new UDPClient("127.0.0.1", port - 1);
 			disposables.Enqueue(client);
 			return client;
 		}
 
 		UDPServer GetServer()
 		{
-			UDPServer server = new UDPServer(PORT);
+			UDPServer server = new UDPServer(port++);
 			disposables.Enqueue(server);
 			return server;
 		}
 
 		UDPServer<T> GetServer<T>() where T : UDPClientBehavior, new()
 		{
-			UDPServer<T> server = new UDPServer<T>(PORT);
+			UDPServer<T> server = new UDPServer<T>(port++);
 			disposables.Enqueue(server);
 			return server;
 		}

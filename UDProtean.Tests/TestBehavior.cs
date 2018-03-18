@@ -29,6 +29,8 @@ namespace UDProtean.Tests
 			uint num = BitConverter.ToUInt32(data, 0);
 			Assert.AreEqual(expected++, num);
 
+			Console.WriteLine("Received {0} bytes of data", data.Length);
+
 			Send(data);
 		}
 

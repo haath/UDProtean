@@ -62,6 +62,16 @@ namespace UDProtean.Client
 			comm.Send(data);
 		}
 
+		public void Send(string message)
+		{
+			Send(message, default(Encoding));
+		}
+
+		public void Send(string message, Encoding encoding)
+		{
+			comm.Send(encoding.GetBytes(message));
+		}
+
 		async Task Listener(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			while (!cancellationToken.IsCancellationRequested)
