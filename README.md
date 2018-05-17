@@ -2,7 +2,9 @@
 
 [![Nuget](https://img.shields.io/nuget/v/UDProtean.svg)](https://www.nuget.org/packages/UDProtean)
 [![Nuget](https://img.shields.io/nuget/dt/UDProtean.svg)](https://www.nuget.org/packages/UDProtean)
-[![Build Status](https://devops.gmantaos.com/buildStatus/icon?job=UDProtean)](https://devops.gmantaos.com/job/UDProtean/)
+[![Build status](https://ci.appveyor.com/api/projects/status/vcrn0rrl91yo54ai/branch/master?svg=true)](https://ci.appveyor.com/project/gmantaos/udprotean/branch/master)
+
+
 
 Primarily with multiplayer games in mind, where the communication between the server and the client is made up of very frequent and small time-sensitive messages. Obviously the TCP protocol never satisfied cases like that. UDP on the other hand usually required a lot of wrapping and delivery acknowledgements, to make sure that nothing important is lost, or delivered out of order.
 
