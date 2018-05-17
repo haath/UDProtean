@@ -10,6 +10,8 @@ Primarily with multiplayer games in mind, where the communication between the se
 
 What this library does, is provive under-the-hood sequential communication, so that the API on which messages are received and handled can assume that everything is sent, delivered and handled in the order in which it was sent.
 
+**Disclaimer:** The current state of this library will function as described when there is a constant flow in communication. What's still left to be implemented is a more proactive mechanism that repeats message deliveries by itself and not only on bad acknowledgements.
+
 ## Usage
 
 ### Getting Started
@@ -45,7 +47,7 @@ client.Send("hello world");
 However, the point of this library is to treat each client as maintained end-to-end connection. For this purpose you want to define a class which implements `UDPClientBehavior`.
 
 ```csharp
-class EchoClient
+class EchoClient : UDPClientBehavior
 {
 	protected override void OnOpen()
 	{
