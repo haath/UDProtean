@@ -33,7 +33,7 @@ before_build:
     nuget restore
 build:
   verbosity: minimal
-test: off
+test: on
 artifacts:
 - path: UDProtean\**\.nupkg
   name: NuGet

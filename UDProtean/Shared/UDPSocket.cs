@@ -20,7 +20,8 @@ namespace UDProtean.Shared
 
 		protected async Task SendDataAsync(byte[] data, IPEndPoint endPoint)
 		{
-			if (rand.NextDouble() >= PACKET_LOSS)
+			if (PACKET_LOSS > 0 
+				&& rand.NextDouble() >= PACKET_LOSS)
 			{
 				await socket.SendAsync(data, data.Length, endPoint);
 			}
@@ -52,6 +53,7 @@ namespace UDProtean.Shared
 				socketDisposed = true;
 				socket.Client.Dispose();
 			}
+			GC.Collect();
 		}
 
 		~UDPSocket()

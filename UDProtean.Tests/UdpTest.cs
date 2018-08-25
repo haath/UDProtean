@@ -16,6 +16,7 @@ using NUnit.Framework;
 
 namespace UDProtean.Tests
 {
+	[TestFixture]
 	public class UdpTest : TestBase
 	{
 		static int port = new Random().Next(1024, 60000);
@@ -29,7 +30,8 @@ namespace UDProtean.Tests
 			UDPClient client = GetClient();
 			UDPServer<TestBehavior> serverT = GetServer<TestBehavior>();
 		}
-
+		
+		[TestCase(0.1)]
 		public void ServerReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -54,20 +56,21 @@ namespace UDProtean.Tests
 			for (uint i = 0; i < 10000; i++)
 			{
 				byte[] data = BitConverter.GetBytes(i);
-				//client.Send(data);
+				client.Send(data);
 			}
 
 			Thread.Sleep(1000);
 
 			Dispose();
 		}
-		
+
+		[TestCase(0.1)]
 		public void ServerBehaviorReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
 
 			UDPServer<TestBehavior> server = GetServer<TestBehavior>();
-			//server.Start();
+			server.Start();
 
 			UDPClient client = GetClient();
 
@@ -80,16 +83,15 @@ namespace UDProtean.Tests
 			}
 
 			Thread.Sleep(1000);
-
-			Dispose();
 		}
-		
+
+		[TestCase(0.1)]
 		public void BidirectionalReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
 
 			UDPServer<TestBehavior> server = GetServer<TestBehavior>();
-			//server.Start();
+			server.Start();
 
 			UDPClient client = GetClient();
 
@@ -109,8 +111,6 @@ namespace UDProtean.Tests
 			}
 
 			Thread.Sleep(1000);
-			
-			Dispose();
 		}
 
 		UDPClient GetClient()
