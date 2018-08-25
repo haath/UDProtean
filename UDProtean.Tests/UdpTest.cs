@@ -31,7 +31,6 @@ namespace UDProtean.Tests
 			UDPServer<TestBehavior> serverT = GetServer<TestBehavior>();
 		}
 		
-		[TestCase(0.1)]
 		public void ServerReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -63,8 +62,7 @@ namespace UDProtean.Tests
 
 			Dispose();
 		}
-
-		[TestCase(0.1)]
+		
 		public void ServerBehaviorReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -84,8 +82,7 @@ namespace UDProtean.Tests
 
 			Thread.Sleep(1000);
 		}
-
-		[TestCase(0.1)]
+		
 		public void BidirectionalReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -96,7 +93,7 @@ namespace UDProtean.Tests
 			UDPClient client = GetClient();
 
 			uint expected = 0;
-			client.OnData += (s, d) =>
+			client.OnMessage += (s, d) =>
 			{
 				uint num = BitConverter.ToUInt32(d.Data, 0);
 				Assert.AreEqual(expected++, num);
@@ -127,7 +124,7 @@ namespace UDProtean.Tests
 			return server;
 		}
 
-		UDPServer<T> GetServer<T>() where T : UDPClientBehavior, new()
+		UDPServer<T> GetServer<T>() where T : Server.UDPClientBehavior, new()
 		{
 			UDPServer<T> server = new UDPServer<T>(port++);
 			disposables.Enqueue(server);

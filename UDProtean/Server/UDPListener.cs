@@ -108,7 +108,7 @@ namespace UDProtean.Server
 
 		void Send(IPEndPoint endPoint, byte[] dgram)
 		{
-			SendData(dgram, endPoint);
+			SendMessage(dgram, endPoint);
 		}
 	}
 }

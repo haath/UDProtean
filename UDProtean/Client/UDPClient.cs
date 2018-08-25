@@ -16,12 +16,10 @@ namespace UDProtean.Client
     {
 		IPEndPoint serverEndPoint;
 
-		CancellationTokenSource runningCancellationToken;
-
 		SequentialCommunication comm;
 
 		public event EventHandler<OpenEventArgs> OnOpen;
-		public event EventHandler<DataEventArgs> OnData;
+		public event EventHandler<MessageEventArgs> OnMessage;
 		public event EventHandler<ErrorEventArgs> OnError;
 		public event EventHandler<CloseEventArgs> OnClose;
 		public event EventHandler<LogEventArgs> OnLog;
@@ -46,7 +44,7 @@ namespace UDProtean.Client
 			comm = new SequentialCommunication(
 				new SendData(SendData),
 				new DataCallback(OnReceivedData)
-				);
+			);
 		}
 
 		public void Connect()
@@ -69,14 +67,16 @@ namespace UDProtean.Client
 
 		public void Send(string message, Encoding encoding)
 		{
-			comm.Send(encoding.GetBytes(message));
+			Send(encoding.GetBytes(message));
 		}
+
+		#region private
 
 		async Task Listener(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			while (!cancellationToken.IsCancellationRequested)
 			{
-				byte[] dgram = await ReceiveFromServer();
+				byte[] dgram = await ReceiveFromServer(cancellationToken);
 
 				comm.Received(dgram);
 			}
@@ -105,12 +105,14 @@ namespace UDProtean.Client
 
 		void SendData(byte[] data)
 		{
-			SendData(data, serverEndPoint);
+			SendMessage(data, serverEndPoint);
 		}
 
 		void OnReceivedData(byte[] data)
 		{
-			OnData?.Invoke(this, new DataEventArgs(data));
+			OnMessage?.Invoke(this, new MessageEventArgs(data));
 		}
+
+		#endregion
 	}
 }

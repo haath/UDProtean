@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace UDProtean.Events
 {
-    public class DataEventArgs : EventArgs
+    public class MessageEventArgs : EventArgs
     {
         public byte[] Data { get; private set; }
 
-        internal DataEventArgs(byte[] data)
+        internal MessageEventArgs(byte[] data)
         {
             Data = data;
         }

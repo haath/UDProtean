@@ -6,7 +6,8 @@ using UDProtean.Shared;
 
 namespace UDProtean.Server
 {
-    public class UDPServer<ClientBehavior> : UDPListener where ClientBehavior : UDPClientBehavior, new()
+    public class UDPServer<ClientBehavior> : UDPListener 
+		where ClientBehavior : UDPClientBehavior, new()
 	{
 		Dictionary<IPEndPoint, ClientBehavior> connections;
 
@@ -23,10 +24,10 @@ namespace UDProtean.Server
 
 			connections.Add(endPoint, behavior);
 
-			behavior._OnOpen(
+			behavior.OnOpen(
 				endPoint,
-				new SendData((data) => SendData(data, endPoint))
-				);
+				new SendData((data) => SendMessage(data, endPoint))
+			);
 
 			return base.InstantiateConnection(endPoint, dgram);
 		}
@@ -44,7 +45,8 @@ namespace UDProtean.Server
 
 		protected override void OnReceivedData(IPEndPoint endPoint, byte[] data)
 		{
-			connections[endPoint]._OnData(data);
+			ClientBehavior client = connections[endPoint];
+			client.OnData(data);
 		}
 	}
 }

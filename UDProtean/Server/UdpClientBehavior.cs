@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+
+using UDProtean.Attributes;
 using UDProtean.Shared;
 
 namespace UDProtean.Server
@@ -12,21 +14,22 @@ namespace UDProtean.Server
 
 		SendData sendMethod;
 
-		internal void _OnOpen(IPEndPoint endPoint, SendData sendMethod)
+		internal void OnOpen(IPEndPoint endPoint, SendData sendMethod)
 		{
 			EndPoint = endPoint;
+			this.sendMethod = sendMethod;
 		}
 
-		internal void _OnData(byte[] data)
+		internal void OnData(byte[] data)
 		{
-			OnData(data);
+			OnMessage(data);
 		}
 
 		protected abstract void OnOpen();
 
 		protected abstract void OnClose();
 
-		protected abstract void OnData(byte[] data);
+		protected abstract void OnMessage(byte[] data);
 
 		protected abstract void OnError(Exception ex);
 

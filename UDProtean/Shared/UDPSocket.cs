@@ -27,7 +27,7 @@ namespace UDProtean.Shared
 			}
 		}
 
-		protected void SendData(byte[] data, IPEndPoint endPoint)
+		protected void SendMessage(byte[] data, IPEndPoint endPoint)
 		{
 			SendDataAsync(data, endPoint).Wait();
 		}

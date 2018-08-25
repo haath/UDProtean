@@ -16,7 +16,7 @@ using NUnit.Framework;
 
 namespace UDProtean.Tests
 {
-	public class TestBehavior : UDPClientBehavior
+	public class TestBehavior : Server.UDPClientBehavior
 	{
 		uint expected = 0;
 
@@ -24,7 +24,7 @@ namespace UDProtean.Tests
 		{
 		}
 
-		protected override void OnData(byte[] data)
+		protected override void OnMessage(byte[] data)
 		{
 			uint num = BitConverter.ToUInt32(data, 0);
 			Assert.AreEqual(expected++, num);
