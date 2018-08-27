@@ -24,10 +24,16 @@ namespace UDProtean.Shared
 			parameters = new List<string>();
 		}
 
-		public void AddParameter(object obj)
+		public RpcMessage AddParameter(object obj)
 		{
 			string json = JsonConvert.SerializeObject(obj);
 			parameters.Add(json);
+			return this;
+		}
+
+		public object GetParameter(int index)
+		{
+			return JsonConvert.DeserializeObject(parameters[index]);
 		}
 
 		public T GetParameter<T>(int index) where T : new()

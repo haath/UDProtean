@@ -37,9 +37,18 @@ namespace UDProtean.Shared
 					{
 						ParameterInfo paramInfo = method.GetParameters()[i];
 
-						MethodInfo getParam = typeof(RpcMessage).GetGenericMethod("GetParameter", paramInfo.ParameterType);
+						object param;
 
-						object param = getParam.Invoke(msg, new object[] { i });
+						if (paramInfo.ParameterType == typeof(string))
+						{
+							param = msg.GetParameter(i).ToString();
+						}
+						else
+						{
+							MethodInfo getParam = typeof(RpcMessage).GetGenericMethod("GetParameter", paramInfo.ParameterType);
+
+							param = getParam.Invoke(msg, new object[] { i });
+						}
 
 						parameters.Add(param);
 					}

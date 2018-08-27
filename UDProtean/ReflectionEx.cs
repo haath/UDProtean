@@ -33,10 +33,26 @@ namespace UDProtean
 			}
 		}
 
-		public static MethodInfo GetGenericMethod(this Type type, string name, Type arg)
+		public static MethodInfo GetMethod(this Type type, string name)
 		{
-			MethodInfo method = type.GetTypeInfo().GetMethod(name, BINDING_FLAGS);
-			return method.MakeGenericMethod(arg);
+			MethodInfo[] methods = type.GetTypeInfo().GetMethods(BINDING_FLAGS);
+			foreach (MethodInfo method in methods)
+			{
+				if (method.Name == name && !method.IsGenericMethod)
+					return method;
+			}
+			return null;
+		}
+
+		public static MethodInfo GetGenericMethod(this Type type, string name, Type genericArg)
+		{
+			MethodInfo[] methods = type.GetTypeInfo().GetMethods(BINDING_FLAGS);
+			foreach (MethodInfo method in methods)
+			{
+				if (method.Name == name && method.IsGenericMethod)
+					return method.MakeGenericMethod(genericArg);
+			}
+			return null;
 		}
 
 		public static Type UnderlyingType(this MemberInfo member)
