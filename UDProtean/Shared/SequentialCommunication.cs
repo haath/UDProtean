@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -16,6 +17,7 @@ namespace UDProtean.Shared
     internal class SequentialCommunication
     {
 		internal const uint SEQUENCE_SIZE = 512;
+		internal const uint FRAGMENT_SIZE = 540;
 
 		public static int SequenceBytes
 		{
@@ -48,6 +50,33 @@ namespace UDProtean.Shared
 		}
 
 		public void Send(byte[] data)
+		{
+			if (data.Length > FRAGMENT_SIZE)
+			{
+				// Slice datagram into fragments
+				byte fragmentCount = 1;
+				int start = 0;
+
+				while (start <= data.Length)
+				{
+					int fragmentSize = Math.Min(data.Length - start, (int)FRAGMENT_SIZE);
+
+					byte[] fragment = data.Slice(start, fragmentSize);
+
+					fragment = new byte[] { fragmentCount++ }.Append(fragment);
+
+					start += fragmentSize;
+
+					SendFragment(fragment);
+				}
+			}
+			else
+			{
+				SendFragment(new byte[] { 0 }.Append(data));
+			}
+		}
+
+		void SendFragment(byte[] data)
 		{
 			byte[] sequence = BitConverter.GetBytes(sending.Value)
 										  .ToLength(SequenceBytes);
@@ -109,11 +138,53 @@ namespace UDProtean.Shared
 			while (receivingBuffer[receiving.Value] != null)
 			{
 				byte[] data = receivingBuffer[receiving.Value];
-				receivingBuffer[receiving.Value] = null;
-				
-				OnData(data);
+				byte fragment = data[0];
+				data = data.Slice(1);
 
-				receiving.MoveNext();
+				if (fragment == 0)
+				{
+					receivingBuffer[receiving.Value] = null;
+
+					OnData(data);
+
+					receiving.MoveNext();
+				}
+				else
+				{
+					MemoryStream buffer = new MemoryStream();
+
+					Sequence current = receiving.Clone();
+
+					while (receivingBuffer[current.Value] != null)
+					{
+						byte[] fragData = receivingBuffer[current.Value];
+						byte fragNum = fragData[0];
+						fragData = fragData.Slice(1);
+
+						if (fragNum < fragment)
+						{
+							break;
+						}
+						else if (fragNum != fragment)
+						{
+							return;
+						}
+
+						receivingBuffer[current.Value] = null;
+						buffer.Write(fragData, 0, fragData.Length);
+
+						fragment++;
+						current.MoveNext();
+					}
+
+					if (buffer.Length > 0)
+					{
+						byte[] bufferData = new byte[buffer.Length];
+						buffer.Read(bufferData, 0, (int)buffer.Length);
+					}
+
+					receiving = current;
+				}
 			}
 		}
 

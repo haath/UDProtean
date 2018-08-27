@@ -25,11 +25,11 @@ namespace UDProtean.Tests
 			}
 		}
 
-		protected int DatagramLength() => chance.Integer(500, 5000);
+		protected int DatagramLength(int min = 500, int max = 5000) => chance.Integer(min, max);
 
-		protected byte[][] TestBuffer()
+		protected byte[][] TestBuffer(int size = (int)SequentialCommunication.SEQUENCE_SIZE * 3, int datagramMin = 500, int datagramMax = 5000)
 		{
-			return chance.N<byte[]>((int)SequentialCommunication.SEQUENCE_SIZE * 3, () => chance.Hash(DatagramLength())).ToArray();
+			return chance.N<byte[]>(size, () => chance.Hash(DatagramLength(datagramMin, datagramMax))).ToArray();
 		}
 	}
 }

@@ -32,8 +32,7 @@ namespace UDProtean.Tests
 
 			CollectionAssert.AreEqual(b1, b1.ToLength(b1.Length));
 		}
-
-		[Test]
+		
 		public void Sending()
 		{
 			byte[][] buffer = TestBuffer();
@@ -88,7 +87,7 @@ namespace UDProtean.Tests
 				byte[] sequence = BitConverter.GetBytes(seq)
 										  .ToLength(SequentialCommunication.SequenceBytes);
 
-				return sequence.Append(data);
+				return sequence.Append(0).Append(data);
 			};
 
 			Action<uint, uint> send = (seq, data) =>
@@ -152,6 +151,48 @@ namespace UDProtean.Tests
 			for (int i = 0; i < vals.Count; i++)
 			{
 				byte[] data = BitConverter.GetBytes(toSend.Dequeue());
+				comm1.Send(data);
+			}
+		}
+
+		[TestCase(0.0)]
+		public void Fragmentation(double packetLoss)
+		{
+			byte[][] buffer = TestBuffer(datagramMin: 1000, datagramMax: 5000);
+
+			int exp = 0;
+			SequentialCommunication comm1 = null;
+			SequentialCommunication comm2 = null;
+
+			Action<SequentialCommunication, byte[]> trySend = (comm, data) =>
+			{
+				if (chance.Bool(1 - packetLoss))
+				{
+					comm.Received(data);
+				}
+			};
+
+			DataCallback callback = (data) =>
+			{
+				CollectionAssert.AreEqual(buffer[exp++], data);
+			};
+
+			SendData send1 = (data) =>
+			{
+				trySend(comm2, data);
+			};
+
+			SendData send2 = (data) =>
+			{
+				trySend(comm1, data);
+			};
+
+			comm1 = new SequentialCommunication(send1, null);
+			comm2 = new SequentialCommunication(send2, callback);
+
+			for (int i = 0; i < buffer.Length; i++)
+			{
+				byte[] data = buffer[i];
 				comm1.Send(data);
 			}
 		}

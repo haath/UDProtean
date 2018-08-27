@@ -55,8 +55,6 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RPC\TestHandler.cs" />
-    <Compile Include="RPC\RpcTests.cs" />
     <Compile Include="SequentialTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestBase.cs" />
