@@ -1,7 +1,6 @@
 ﻿using System;
 
 using UDProtean;
-using UDProtean.Shared;
 using ChanceNET;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +9,7 @@ using System.Diagnostics;
 
 using NUnit;
 using NUnit.Framework;
+using System.Threading;
 
 namespace UDProtean.Tests
 {
@@ -105,12 +105,58 @@ namespace UDProtean.Tests
 			send(4, 4);
 		}
 
+		[Test]
+		public void ReceivingFragmented()
+		{
+			SequentialCommunication comm;
+
+			uint next = 0;
+
+			DataCallback callback = (data) =>
+			{
+				Debug(data);
+
+				uint received = BitConverter.ToUInt32(data, 0);
+
+				Console.WriteLine(received);
+
+				Assert.AreEqual(next, received);
+				next++;
+			};
+
+			comm = new SequentialCommunication(null, callback);
+
+			Func<uint, byte, byte[], byte[]> genDgram = (seq, frag, data) =>
+			{
+				byte[] sequence = BitConverter.GetBytes(seq)
+										  .ToLength(SequentialCommunication.SequenceBytes);
+
+				byte[] toSend = sequence.Append(frag).Append(data);
+
+				Debug(toSend);
+
+				return toSend;
+			};
+
+			Action<uint, byte, uint> send = (seq, frag, data) =>
+			{
+				byte[] dgram = genDgram(seq, frag, BitConverter.GetBytes(data).ToLength(4));
+				comm.Received(dgram);
+			};
+			
+			send(0, 1, 0);
+			send(1, 2, 0);
+			send(2, 0, 1);
+			send(5, 0, 3);
+			send(3, 1, 2);
+			send(4, 2, 0);
+		}
+
 		[TestCase(0.0)]
-		[TestCase(0.2)]
-		[TestCase(0.3)]
+		[TestCase(0.1)]
 		public void Communicating(double packetLoss)
 		{
-			Queue<uint> vals = new Queue<uint>(chance.N(ushort.MaxValue * 2, () => (uint)chance.Natural()));
+			Queue<uint> vals = new Queue<uint>(chance.N(1000, () => (uint)chance.Natural()));
 			Queue<uint> toSend = new Queue<uint>(vals);
 
 			SequentialCommunication comm1 = null;			
@@ -120,7 +166,11 @@ namespace UDProtean.Tests
 			{
 				if (chance.Bool(1 - packetLoss))
 				{
-					comm.Received(data);
+					new Thread(() =>
+					{
+						Thread.Sleep(20);
+						comm.Received(data);
+					}).Start();
 				}
 			};
 
@@ -155,10 +205,10 @@ namespace UDProtean.Tests
 			}
 		}
 
-		[TestCase(0.0)]
+
 		public void Fragmentation(double packetLoss)
 		{
-			byte[][] buffer = TestBuffer(datagramMin: 1000, datagramMax: 5000);
+			byte[][] buffer = TestBuffer(size: 10, datagramMin: 1000, datagramMax: 5000);
 
 			int exp = 0;
 			SequentialCommunication comm1 = null;
@@ -168,7 +218,7 @@ namespace UDProtean.Tests
 			{
 				if (chance.Bool(1 - packetLoss))
 				{
-					comm.Received(data);
+					new Thread(() =>comm.Received(data)).Start();
 				}
 			};
 

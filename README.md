@@ -9,6 +9,7 @@ UDProtean
 Primarily with multiplayer games in mind, where the communication between the server and the client is made up of very frequent and small time-sensitive messages. Obviously the TCP protocol never satisfied cases like that. UDP on the other hand usually required a lot of wrapping and delivery acknowledgements, to make sure that nothing important is lost, or delivered out of order.
 
 What this library does, is provive under-the-hood sequential communication, so that the API on which messages are received and handled can assume that everything is sent, delivered and handled in the order in which it was sent.
+Additionally, it also handles fragmentation and defragmentation of large datagrams so that applications built on top of it can leverage a message-centric method of communication, with no concern of the underlying UDP limitations or the MTUs.
 
 **Disclaimer:** The current state of this library will function as described when there is a constant flow in communication. What's still left to be implemented is a more proactive mechanism that repeats message deliveries by itself and not only on bad acknowledgements.
 

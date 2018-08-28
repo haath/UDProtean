@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace UDProtean.Shared
+namespace UDProtean
 {
     public abstract class UDPSocket : IDisposable
     {
@@ -16,15 +16,33 @@ namespace UDProtean.Shared
 		protected UdpClient socket { get; set; }
 		protected CancellationTokenSource runningCancellationToken;
 
+		protected abstract IPEndPoint ReceiveFrom { get; }
+
 		bool socketDisposed = false;
+
+		protected async Task SendDataAsync(byte[] data)
+		{
+			if (PACKET_LOSS == 0
+				|| rand.NextDouble() >= PACKET_LOSS)
+			{
+				Debug.Write("Sending {0} bytes", data.Length);
+				await socket.SendAsync(data, data.Length);
+			}
+		}
 
 		protected async Task SendDataAsync(byte[] data, IPEndPoint endPoint)
 		{
-			if (PACKET_LOSS > 0 
-				&& rand.NextDouble() >= PACKET_LOSS)
+			if (PACKET_LOSS == 0
+				|| rand.NextDouble() >= PACKET_LOSS)
 			{
+				Debug.Write("Sending {0} bytes", data.Length);
 				await socket.SendAsync(data, data.Length, endPoint);
 			}
+		}
+
+		protected void SendMessage(byte[] data)
+		{
+			SendDataAsync(data).Wait();
 		}
 
 		protected void SendMessage(byte[] data, IPEndPoint endPoint)

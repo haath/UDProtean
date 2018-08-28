@@ -4,7 +4,6 @@ using System.Net;
 using System.Text;
 
 using UDProtean.Attributes;
-using UDProtean.Shared;
 
 namespace UDProtean.Server
 {

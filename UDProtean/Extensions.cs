@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text;
 
@@ -71,6 +74,22 @@ namespace UDProtean
 		{
 			string hex = BitConverter.ToString(buffer);
 			return hex.Replace("-", "");
+		}
+
+		public static Task ConnectAsync(this Socket socket, IPAddress ipAddr, int port)
+		{
+			return Task.Factory.FromAsync(
+				socket.BeginConnect(ipAddr, port, null, socket),
+				socket.EndConnect
+			);
+		}
+
+		public static Task SendAsync(this Socket socket, IPEndPoint dest, byte[] data)
+		{
+			return Task.Factory.FromAsync(
+				socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, dest, null, socket),
+				socket.EndSendTo
+			);
 		}
 	}
 }

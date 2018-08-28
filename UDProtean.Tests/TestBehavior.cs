@@ -3,7 +3,6 @@
 using UDProtean;
 using UDProtean.Client;
 using UDProtean.Server;
-using UDProtean.Shared;
 using ChanceNET;
 using System.Linq;
 using System.Threading.Tasks;

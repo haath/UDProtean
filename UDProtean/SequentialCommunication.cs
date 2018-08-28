@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("UDProtean.Tests")]
 
-namespace UDProtean.Shared
+namespace UDProtean
 {
 	internal delegate void SendData(byte[] data);
 	internal delegate void DataCallback(byte[] data);
@@ -31,8 +31,11 @@ namespace UDProtean.Shared
 		}
 
 		Sequence sending;
+		Sequence sendingAck;
+		Sequence lastAckSent;
+
 		Sequence receiving;
-		Sequence ack;
+		Sequence processing;
 
 		byte[][] sendingBuffer;
 		byte[][] receivingBuffer;
@@ -51,6 +54,8 @@ namespace UDProtean.Shared
 
 		public void Send(byte[] data)
 		{
+			Debug.Write("Sending {0} bytes", data.Length);
+
 			if (data.Length > FRAGMENT_SIZE)
 			{
 				// Slice datagram into fragments
@@ -62,6 +67,8 @@ namespace UDProtean.Shared
 					int fragmentSize = Math.Min(data.Length - start, (int)FRAGMENT_SIZE);
 
 					byte[] fragment = data.Slice(start, fragmentSize);
+
+					Debug.Write("Fragment {0}, {1} bytes", fragmentCount, fragmentSize);
 
 					fragment = new byte[] { fragmentCount++ }.Append(fragment);
 
@@ -83,81 +90,103 @@ namespace UDProtean.Shared
 
 			byte[] dgram = sequence.Append(data);
 
+			Debug.Write("Sending sequence: " + sending.Value);
+
 			/*
-			 * First, store the datagram in the buffer
+			 * First, store the datagram in the buffer.
 			 */
 			sendingBuffer[sending.Value] = dgram;
 			sending.MoveNext();
+
+			/*
+			 * Empty the next spot in the circle.
+			 * This is done to ensure separation between this
+			 * and the previous cycle of values.
+			 * Helps clearing the buffer backwards upon
+			 * acknowledgements without deleting newer payloads.
+			 */
+			sendingBuffer[sending.Value] = null;
 
 			SendData(dgram);
 		}
 
 		public void Received(byte[] dgram)
 		{
-			byte[] sequence = dgram.Slice(0, SequenceBytes).ToLength(4);
-			uint sequenceNum = BitConverter.ToUInt32(sequence, 0);
+			Debug.Write("Received {0} bytes", dgram.Length);
+
+			byte[] sequenceBytes = dgram.Slice(0, SequenceBytes).ToLength(4);
+			Sequence sequence = BitConverter.ToUInt32(sequenceBytes, 0);
 
 			/*
 			 * If the datagram is only SequenceBytes long, then it's an ACK
 			 */
 			if (dgram.Length == SequenceBytes)
 			{
-				ProcessAck(sequenceNum);
+				ProcessAck(sequence);
 				return;
 			}
 
-			byte[] data = dgram.Slice(SequenceBytes);
-			receivingBuffer[sequenceNum] = data;
+			Debug.Write("Received sequence: {0}  [{1}/{2}]", sequence, lastAckSent, receiving);
 
-			if (receiving.Value == sequenceNum)
+			if (sequence.Between(lastAckSent, receiving))
+				return;
+
+			byte[] data = dgram.Slice(SequenceBytes);
+			receivingBuffer[sequence] = data;
+
+			if (receiving == sequence)
 			{
 				/*
-				 * This datagram is on-par with the sequence
-				 * Handle it
+				 * This datagram is on-par with the sequence.
+				 * Handle it.
 				 */
+				receiving.MoveNext();
 
-				// Advance the receiving sequence according to the receiving buffer
+				// Advance the receiving sequence on to the receiving buffer.
 				ProcessReceivingBuffer();
 
-				// Send ack
+				// Send ack.
 				SendAck(receiving.Previous);
 			}
 			else
 			{
 				/*
-				 * We received a datagram with an unexpected sequence number
-				 * Let the other end know which was the last datagram we received
-				 */
-				
+				 * We received a datagram with an unexpected sequence number.
+				 * Let the other end know which was the last datagram we received.
+				 */				
 				SendAck(receiving.Previous);
 			}
 		}
 		
 		void ProcessReceivingBuffer()
 		{
-			while (receivingBuffer[receiving.Value] != null)
+			Debug.Write("Starting buffer processing at {0}", processing.Value);
+
+			while (receivingBuffer[processing.Value] != null)
 			{
-				byte[] data = receivingBuffer[receiving.Value];
+				Debug.Write("Checking buffer at: " + processing.Value);
+
+				byte[] data = receivingBuffer[processing.Value];
 				byte fragment = data[0];
 				data = data.Slice(1);
 
+				Debug.Write("Fragment num: " + fragment);
+
 				if (fragment == 0)
 				{
-					receivingBuffer[receiving.Value] = null;
+					receivingBuffer[processing.Value] = null;
 
 					OnData(data);
 
-					receiving.MoveNext();
+					processing.MoveNext();
 				}
-				else
+				else if (fragment == 1 && CompleteDatagramAt(processing))
 				{
 					MemoryStream buffer = new MemoryStream();
 
-					Sequence current = receiving.Clone();
-
-					while (receivingBuffer[current.Value] != null)
+					while (receivingBuffer[processing.Value] != null)
 					{
-						byte[] fragData = receivingBuffer[current.Value];
+						byte[] fragData = receivingBuffer[processing.Value];
 						byte fragNum = fragData[0];
 						fragData = fragData.Slice(1);
 
@@ -165,39 +194,77 @@ namespace UDProtean.Shared
 						{
 							break;
 						}
-						else if (fragNum != fragment)
-						{
-							return;
-						}
 
-						receivingBuffer[current.Value] = null;
+						Debug.Write("Writing fragment {0}.{1}", processing.Value, fragNum);
+
+						receivingBuffer[processing.Value] = null;
 						buffer.Write(fragData, 0, fragData.Length);
 
 						fragment++;
-						current.MoveNext();
+						processing.MoveNext();
 					}
 
 					if (buffer.Length > 0)
 					{
+						buffer.Position = 0;
 						byte[] bufferData = new byte[buffer.Length];
 						buffer.Read(bufferData, 0, (int)buffer.Length);
-					}
 
-					receiving = current;
+						OnData(bufferData);
+					}
+				}
+				else if (fragment != 1)
+				{
+					Debug.Write("ERROR: looking at fragment number {0}", fragment);
+					return;
+				}
+				else
+				{
+					return;
 				}
 			}
 		}
 
+		bool CompleteDatagramAt(Sequence position)
+		{
+			byte fragment = 1;
+
+			while (receivingBuffer[position.Value] != null)
+			{
+				byte fragNum = receivingBuffer[position.Value][0];
+
+				Debug.Write("Checking fragment {0}", fragNum);
+
+				if (fragNum < fragment)
+				{
+					return true;
+				}
+				else if (fragNum != fragment)
+				{
+					Debug.Write("ERROR: incosistent fragment {0}->{1}", fragment, fragNum);
+				}
+
+				fragment++;
+				position.MoveNext();
+			}
+
+			return false;
+		}
+
 		void ProcessAck(uint sequenceNum)
 		{
-			if (ack.Value == sequenceNum)
+			Debug.Write("Received ack: " + sequenceNum);
+
+			if (sendingAck.Value == sequenceNum)
 			{
-				Sequence bufferClear = ack.Clone();
-				ack.MoveNext();
+				Sequence bufferClear = sendingAck.Clone();
+				sendingAck.MoveNext();
 
 				while (sendingBuffer[bufferClear.Value] != null 
-					&& bufferClear.Value != ack.Value)
+					&& bufferClear.Value != sendingAck.Value)
 				{
+					Debug.Write("Clearing sending buffer: " + bufferClear.Value);
+
 					sendingBuffer[bufferClear.Value] = null;
 					bufferClear.MovePrevious();
 				}
@@ -207,15 +274,19 @@ namespace UDProtean.Shared
 			{
 				/*
 				 * We received an ACK for a datagram that was not the last on the sequence
-				 * Resend the datagram that are after the one being acknowledged
+				 * Resend the datagram that is after the one being acknowledged
 				 */
 				uint toRepeat = (sequenceNum + 1) % SEQUENCE_SIZE;
 				byte[] dgramToRepeat = sendingBuffer[toRepeat];
 
-				ack.Set(toRepeat);
+				sendingAck.Set(toRepeat);
+
+				Debug.Write("Repeating sequence: {0}", toRepeat);
 
 				if (dgramToRepeat != null)
 				{
+					Debug.Write("Sending sequence: {0}", toRepeat);
+
 					SendData(dgramToRepeat);
 				}
 			}
@@ -223,17 +294,25 @@ namespace UDProtean.Shared
 
 		void SendAck(uint sequenceNum)
 		{
+			Debug.Write("Sending ack: " + sequenceNum);
+
+			lastAckSent = sequenceNum;
+
 			byte[] ack = BitConverter.GetBytes(sequenceNum).ToLength(SequenceBytes);
 			SendData(ack);
 		}
 
 		protected virtual void SendData(byte[] data)
 		{
+			Debug.Write("Sending {0} bytes", data.Length);
+
 			sendData?.Invoke(data);
 		}
 
 		protected virtual void OnData(byte[] data)
 		{
+			Debug.Write("Handling {0} bytes", data.Length);
+
 			callback?.Invoke(data);
 		}
     }

@@ -7,32 +7,33 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using UDProtean.Events;
-using UDProtean.Shared;
 
 namespace UDProtean.Server
 {
     public abstract class UDPListener : UDPSocket
     {
-		CancellationTokenSource runningCancellationToken;
+		IPEndPoint endPoint;
+
+		protected override IPEndPoint ReceiveFrom => endPoint;
 
 		public event EventHandler<ErrorEventArgs> OnError;
 		public event EventHandler<LogEventArgs> OnLog;
 
 		Dictionary<IPEndPoint, SequentialCommunication> connections;
 
-		internal UDPListener(string host, int port)
+		internal UDPListener(string host, int port) : base()
 		{
 			IPAddress bindAddress;
 			if (IPAddress.TryParse(host, out bindAddress))
 			{
-				IPEndPoint endPoint = new IPEndPoint(bindAddress, port);
-
-				socket = new UdpClient(endPoint);
+				endPoint = new IPEndPoint(bindAddress, port);
 			}
 			else
 			{
-				throw new ArgumentException("Invalid IP addres: " + host);
+				throw new ArgumentException("Invalid IP address: " + host);
 			}
+
+			socket = new UdpClient(endPoint);
 
 			connections = new Dictionary<IPEndPoint, SequentialCommunication>();
 		}
@@ -51,6 +52,7 @@ namespace UDProtean.Server
 
 		async Task Run()
 		{
+			Debug.Write("Listening...");
 			while (true)
 			{
 				try

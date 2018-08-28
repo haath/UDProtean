@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using UDProtean.Shared;
 using UDProtean.Events;
 using System.Threading;
 
@@ -24,7 +23,9 @@ namespace UDProtean.Client
 		public event EventHandler<CloseEventArgs> OnClose;
 		public event EventHandler<LogEventArgs> OnLog;
 
-		public UDPClient(string host, int port)
+		protected override IPEndPoint ReceiveFrom => serverEndPoint;
+
+		public UDPClient(string host, int port) : base()
 		{
 			IPAddress serverAddress;
 
@@ -38,8 +39,9 @@ namespace UDProtean.Client
 			}
 
 			serverEndPoint = new IPEndPoint(serverAddress, port);
-
 			socket = new UdpClient();
+			socket.ExclusiveAddressUse = false;
+			socket.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
 			comm = new SequentialCommunication(
 				new SendData(SendData),
@@ -50,6 +52,9 @@ namespace UDProtean.Client
 		public void Connect()
 		{
 			runningCancellationToken = new CancellationTokenSource();
+
+			socket.Connect(serverEndPoint);
+
 			Task.Factory.StartNew(() => Listener(runningCancellationToken.Token));
 
 			SendData(new byte[4]);
@@ -57,7 +62,15 @@ namespace UDProtean.Client
 
 		public void Send(byte[] data)
 		{
-			comm.Send(data);
+			Debug.Write("Sending {0} bytes", data.Length);
+			try
+			{
+				comm.Send(data);
+			}
+			catch (Exception ex)
+			{
+				OnError?.Invoke(this, new ErrorEventArgs(ex));
+			}
 		}
 
 		public void Send(string message)
@@ -84,6 +97,7 @@ namespace UDProtean.Client
 
 		async Task<byte[]> ReceiveFromServer(CancellationToken cancellationToken = default(CancellationToken))
 		{
+			Debug.Write("Listening...");
 			while (!cancellationToken.IsCancellationRequested)
 			{
 				try
@@ -105,7 +119,7 @@ namespace UDProtean.Client
 
 		void SendData(byte[] data)
 		{
-			SendMessage(data, serverEndPoint);
+			SendMessage(data);
 		}
 
 		void OnReceivedData(byte[] data)

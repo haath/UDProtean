@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace UDProtean.Shared
+namespace UDProtean
 {
     internal struct Sequence
     {
 		uint value;
 
-		public uint Value
-		{
-			get { return value; }
-		}
+		public uint Value => value;
 
 		public uint Previous
 		{
@@ -62,6 +59,13 @@ namespace UDProtean.Shared
 			return new Sequence(value);
 		}
 
+		public bool Between(Sequence s1, Sequence s2)
+		{
+			return (s1 < s2 && s1 < this && this < s2)      // [ .. s1 .. this .. s2 .. ]
+				|| (s1 > s2 && (s1 < this || this < s2));	// [ .. this .. s2 .. s1 .. ]
+															// [ .. s2 .. s1 .. this .. ]
+		}
+
 		public static bool operator ==(Sequence s1, Sequence s2)
 		{
 			return s1.value == s2.value;
@@ -70,6 +74,31 @@ namespace UDProtean.Shared
 		public static bool operator !=(Sequence s1, Sequence s2)
 		{
 			return s1.value != s2.value;
+		}
+
+		public static bool operator <(Sequence s1, Sequence s2)
+		{
+			return s1.value < s2.value;
+		}
+
+		public static bool operator >(Sequence s1, Sequence s2)
+		{
+			return s1.value > s2.value;
+		}
+
+		public static implicit operator Sequence(uint value)
+		{
+			return new Sequence(value);
+		}
+
+		public static implicit operator uint(Sequence sequence)
+		{
+			return sequence.value;
+		}
+
+		public override string ToString()
+		{
+			return value.ToString();
 		}
 	}
 }
