@@ -52,7 +52,6 @@ namespace UDProtean.Server
 
 		async Task Run()
 		{
-			Debug.Write("Listening...");
 			while (true)
 			{
 				try
@@ -68,6 +67,8 @@ namespace UDProtean.Server
 					if (connection != null && AuthenticateDatagram(endPoint, dgram, out data))
 					{
 						connection.Received(data);
+
+						connection.Flush();
 					}
 				}
 				catch (Exception ex)
@@ -84,12 +85,15 @@ namespace UDProtean.Server
 				return connections[endPoint];
 			}
 
+			if (dgram.Length != 4)
+				return null;
+
 			SequentialCommunication conn = InstantiateConnection(endPoint, dgram);
 
 			if (conn != null)
 				connections.Add(endPoint, conn);
 
-			return conn;
+			return null;
 		}
 
 		internal virtual SequentialCommunication InstantiateConnection(IPEndPoint endPoint, byte[] dgram)

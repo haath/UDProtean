@@ -25,7 +25,6 @@ namespace UDProtean
 			if (PACKET_LOSS == 0
 				|| rand.NextDouble() >= PACKET_LOSS)
 			{
-				Debug.Write("Sending {0} bytes", data.Length);
 				await socket.SendAsync(data, data.Length);
 			}
 		}
@@ -35,7 +34,6 @@ namespace UDProtean
 			if (PACKET_LOSS == 0
 				|| rand.NextDouble() >= PACKET_LOSS)
 			{
-				Debug.Write("Sending {0} bytes", data.Length);
 				await socket.SendAsync(data, data.Length, endPoint);
 			}
 		}

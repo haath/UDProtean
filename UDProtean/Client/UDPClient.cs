@@ -62,7 +62,6 @@ namespace UDProtean.Client
 
 		public void Send(byte[] data)
 		{
-			Debug.Write("Sending {0} bytes", data.Length);
 			try
 			{
 				comm.Send(data);
@@ -92,12 +91,13 @@ namespace UDProtean.Client
 				byte[] dgram = await ReceiveFromServer(cancellationToken);
 
 				comm.Received(dgram);
+
+				comm.Flush();
 			}
 		}
 
 		async Task<byte[]> ReceiveFromServer(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Debug.Write("Listening...");
 			while (!cancellationToken.IsCancellationRequested)
 			{
 				try

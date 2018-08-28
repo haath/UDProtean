@@ -62,8 +62,25 @@ namespace UDProtean
 		public bool Between(Sequence s1, Sequence s2)
 		{
 			return (s1 < s2 && s1 < this && this < s2)      // [ .. s1 .. this .. s2 .. ]
-				|| (s1 > s2 && (s1 < this || this < s2));	// [ .. this .. s2 .. s1 .. ]
+				|| (s1 > s2 && (s1 < this || this < s2));   // [ .. this .. s2 .. s1 .. ]
 															// [ .. s2 .. s1 .. this .. ]
+		}
+
+		public override string ToString()
+		{
+			return value.ToString();
+		}
+
+		public uint DistanceTo(Sequence seq)
+		{
+			if (seq >= this)
+			{
+				return seq.value - this.value;
+			}
+			else
+			{
+				return SequentialCommunication.SEQUENCE_SIZE - this.value + seq.value;
+			}
 		}
 
 		public static bool operator ==(Sequence s1, Sequence s2)
@@ -94,11 +111,6 @@ namespace UDProtean
 		public static implicit operator uint(Sequence sequence)
 		{
 			return sequence.value;
-		}
-
-		public override string ToString()
-		{
-			return value.ToString();
 		}
 	}
 }

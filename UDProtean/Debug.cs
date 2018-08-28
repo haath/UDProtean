@@ -26,21 +26,21 @@ namespace UDProtean
 		}
 
 #if DEBUG
-		public static void Write(string line)
+		public static void Write(int seqId, string line)
 		{
 			StackFrame curFrame = CallingFrame;
 			string type = curFrame.GetMethod().DeclaringType.Name;
 			string method = curFrame.GetMethod().Name;
 
-			Console.WriteLine("{0}.{1} => {2}", type, method, line);
+			Console.WriteLine("{0}.{1} => {2}", seqId, method, line);
 		}
 #else
-		public static void Write(string line) { }
+		public static void Write(int seqId, string line) { }
 #endif
 
-		public static void Write(string format, params object[] args)
+		public static void Write(int seqId, string format, params object[] args)
 		{
-			Write(string.Format(format, args));
+			Write(seqId, string.Format(format, args));
 		}
 
 		public static string Visualize(this byte[] buffer)

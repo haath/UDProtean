@@ -30,6 +30,8 @@ namespace UDProtean.Tests
 			UDPServer<TestBehavior> serverT = GetServer<TestBehavior>();
 		}
 		
+		[TestCase(0.0)]
+		[TestCase(0.1)]
 		public void ServerReceiving(double packetLoss)
 		{
 			UDPSocket.PACKET_LOSS = packetLoss;
@@ -55,6 +57,7 @@ namespace UDProtean.Tests
 			{
 				byte[] data = BitConverter.GetBytes(i);
 				client.Send(data);
+				Thread.Sleep(0);
 			}
 
 			Thread.Sleep(1000);

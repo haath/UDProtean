@@ -154,6 +154,7 @@ namespace UDProtean.Tests
 
 		[TestCase(0.0)]
 		[TestCase(0.1)]
+		[TestCase(0.2)]
 		public void Communicating(double packetLoss)
 		{
 			Queue<uint> vals = new Queue<uint>(chance.N(1000, () => (uint)chance.Natural()));
