@@ -274,9 +274,8 @@ namespace UDProtean
 					Debug.Write(seqId, "Flushing {0}", flush);
 
 					SendDatagram(flush);
-
-					flush.MoveNext();
 				}
+				flush.MoveNext();
 			}
 		}
 
