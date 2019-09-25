@@ -17,8 +17,8 @@ namespace UDProtean
     internal class SequentialCommunication
     {
 		internal const long STALE_AGE_MS = 200;
-		internal const uint SEQUENCE_SIZE = 512;
-		internal const uint FRAGMENT_SIZE = 540;
+		internal const int SEQUENCE_SIZE = 512;
+		internal const int FRAGMENT_SIZE = 540;
 		static int SeqIdPool = 0;
 
 		int seqId = SeqIdPool++;
@@ -60,29 +60,21 @@ namespace UDProtean
 		{
 			Debug.Write(seqId, "Sending {0} bytes", data.Length);
 
-			if (data.Length > FRAGMENT_SIZE)
-			{
-				// Slice datagram into fragments
-				byte fragmentCount = 1;
-				int start = 0;
+            int fragmentCount = (data.Length / FRAGMENT_SIZE) + 1;
+            int dataIndex = 0;
 
-				while (start < data.Length)
-				{
-					int fragmentSize = Math.Min(data.Length - start, (int)FRAGMENT_SIZE);
+            while (fragmentCount > 0)
+            {
+                fragmentCount--;
 
-					byte[] fragment = data.Slice(start, fragmentSize);
+                int fragmentSize = Math.Min(data.Length - dataIndex, FRAGMENT_SIZE);
 
-					fragment = new byte[] { fragmentCount++ }.Append(fragment);
+                byte[] fragment = data.Slice(dataIndex, fragmentSize);
+                fragment = new byte[] { (byte)fragmentCount }.Append(fragment);
+                dataIndex += fragmentSize;
 
-					start += fragmentSize;
-
-					SendFragment(fragment);
-				}
-			}
-			else
-			{
-				SendFragment(new byte[] { 0 }.Append(data));
-			}
+                SendFragment(fragment);
+            }
 		}
 
 		void SendFragment(byte[] data)
@@ -173,93 +165,70 @@ namespace UDProtean
 			{
 				Debug.Write(seqId, "Checking buffer at: " + processing.Value);
 
-				byte[] data = receivingBuffer[processing.Value];
-				byte fragment = data[0];
-				data = data.Slice(1);
+                int fragmentCount = CompleteDatagramAt(processing);
 
-				Debug.Write(seqId, "Fragment num: " + fragment);
+                if (fragmentCount > 0)
+                {
+                    MemoryStream bufferStream = new MemoryStream();
 
-				if (fragment == 0)
-				{
-					receivingBuffer[processing.Value] = null;
+                    while (fragmentCount > 0)
+                    {
+                        byte[] fragData = receivingBuffer[processing.Value];
+                        byte fragNum = fragData[0];
+                        fragData = fragData.Slice(1);
 
-					OnData(data);
+                        Debug.Write(seqId, "Writing fragment {0}.{1}", processing.Value, fragNum);
+                        bufferStream.Write(fragData, 0, fragData.Length);
 
-					processing.MoveNext();
-				}
-				else if (fragment == 1 && CompleteDatagramAt(processing))
-				{
-					MemoryStream buffer = new MemoryStream();
+                        receivingBuffer[processing.Value] = null;
+                        fragmentCount--;
+                        processing.MoveNext();
+                    }
 
-					while (!receivingBuffer[processing.Value].IsEmpty)
-					{
-						byte[] fragData = receivingBuffer[processing.Value];
-						byte fragNum = fragData[0];
-						fragData = fragData.Slice(1);
+                    byte[] buffer = new byte[bufferStream.Length];
 
-						if (fragNum < fragment)
-						{
-							break;
-						}
+                    bufferStream.Position = 0;
+                    bufferStream.Read(buffer, 0, (int)bufferStream.Length);
+                    bufferStream.Dispose();
 
-						Debug.Write(seqId, "Writing fragment {0}.{1}", processing.Value, fragNum);
-
-						receivingBuffer[processing.Value] = null;
-						buffer.Write(fragData, 0, fragData.Length);
-
-						fragment++;
-						processing.MoveNext();
-
-						if (fragData.Length < FRAGMENT_SIZE)
-							break;
-					}
-
-					if (buffer.Length > 0)
-					{
-						buffer.Position = 0;
-						byte[] bufferData = new byte[buffer.Length];
-						buffer.Read(bufferData, 0, (int)buffer.Length);
-
-						OnData(bufferData);
-					}
-				}
-				else if (fragment != 1)
-				{
-					Debug.Write(seqId, "ERROR: looking at fragment number {0}", fragment);
-					return;
-				}
-				else
-				{
-					return;
-				}
+                    OnData(buffer);
+                }
+                else
+                {
+                    return;
+                }
 			}
 		}
 
-		bool CompleteDatagramAt(Sequence position)
+		int CompleteDatagramAt(Sequence position)
 		{
-			byte fragment = 1;
+            int fragmentCount = 0;
+            int previousFragmentNum = 0;
 
 			while (!receivingBuffer[position.Value].IsEmpty)
 			{
 				byte fragNum = receivingBuffer[position.Value][0];
 
-				Debug.Write(seqId, "Checking fragment {0}", fragNum);
+                fragmentCount++;
 
-				if (fragNum < fragment
-					|| receivingBuffer[position.Value].Length < FRAGMENT_SIZE)
+                Debug.Write(seqId, "Checking fragment {0}", fragNum);
+
+				if (fragNum == 0)
 				{
-					return true;
-				}
-				else if (fragNum != fragment)
-				{
-					Debug.Write(seqId, "ERROR: incosistent fragment {0}->{1}", fragment, fragNum);
+					return fragmentCount;
 				}
 
-				fragment++;
-				position.MoveNext();
+                if (previousFragmentNum > 0
+                    && fragNum != previousFragmentNum - 1)
+				{
+					Debug.Write(seqId, "ERROR: incosistent fragment {0}->{1}", previousFragmentNum, fragNum);
+				}
+
+                previousFragmentNum = fragNum;
+                position.MoveNext();
 			}
 
-			return false;
+			return 0;
 		}
 
 		public void Flush()

@@ -144,13 +144,15 @@ namespace UDProtean.Tests
 				comm.Received(dgram);
 			};
 			
-			send(0, 1, 0);
-			send(1, 2, 0);
-			send(2, 0, 1);
-			send(5, 0, 3);
+			send(0, 0, 0);
+			send(1, 1, 1);
 			send(3, 1, 2);
-			send(4, 2, 0);
-		}
+            send(5, 0, 3);
+            send(4, 0, 0);
+            send(2, 0, 0);
+
+            Assert.AreEqual(4, next);
+        }
 
 		[TestCase(0.0)]
 		[TestCase(0.1)]
