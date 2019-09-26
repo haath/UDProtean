@@ -126,6 +126,11 @@ namespace UDProtean
 			if (sequence.Between(lastAckSent, receiving))
 				return;
 
+            if (sequence.IsBefore(processing))
+            {
+                return;
+            }
+
 			byte[] data = dgram.Slice(SequenceBytes);
 			receivingBuffer[sequence] = data;
 
@@ -182,6 +187,12 @@ namespace UDProtean
 
                         receivingBuffer[processing.Value] = null;
                         fragmentCount--;
+
+                        if (processing == receiving.Next)
+                        {
+                            SendAck(receiving);
+                            receiving.MoveNext();
+                        }
                         processing.MoveNext();
                     }
 

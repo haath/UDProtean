@@ -83,6 +83,16 @@ namespace UDProtean
 			}
 		}
 
+        public bool IsBefore(Sequence seq)
+        {
+            return !IsAfter(seq) && this != seq;
+        }
+
+        public bool IsAfter(Sequence seq)
+        {
+            return DistanceTo(seq) >= 16;
+        }
+
 		public static bool operator ==(Sequence s1, Sequence s2)
 		{
 			return s1.value == s2.value;
