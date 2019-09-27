@@ -41,7 +41,7 @@ namespace UDProtean.Client
 			serverEndPoint = new IPEndPoint(serverAddress, port);
 			socket = new UdpClient();
 			socket.ExclusiveAddressUse = false;
-			socket.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+	        socket.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
 			comm = new SequentialCommunication(
 				new SendData(SendData),
@@ -57,7 +57,12 @@ namespace UDProtean.Client
 
 			Task.Factory.StartNew(() => Listener(runningCancellationToken.Token));
 
-			SendData(new byte[4]);
+
+			byte[] handshake =  Utils.GenerateHandshake().HexToBytes();
+			SendData(handshake);
+			SendData(handshake);
+			SendData(handshake);
+			SendData(handshake);
 		}
 
 		public void Send(byte[] data)
@@ -89,6 +94,9 @@ namespace UDProtean.Client
 			while (!cancellationToken.IsCancellationRequested)
 			{
 				byte[] dgram = await ReceiveFromServer(cancellationToken);
+
+				if (Utils.IsHandshake(dgram))
+					continue;
 
 				comm.Received(dgram);
 

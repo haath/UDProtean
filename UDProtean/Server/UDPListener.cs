@@ -85,8 +85,15 @@ namespace UDProtean.Server
 				return connections[endPoint];
 			}
 
-			if (dgram.Length != 4)
+			if (!Utils.IsHandshake(dgram))
+			{
 				return null;
+			}
+
+			SendDataAsync(dgram);
+			SendDataAsync(dgram);
+			SendDataAsync(dgram);
+			SendDataAsync(dgram);
 
 			SequentialCommunication conn = InstantiateConnection(endPoint, dgram);
 
